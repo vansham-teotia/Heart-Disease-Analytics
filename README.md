@@ -43,7 +43,7 @@ Developed an interactive dashboard featuring:
 
 ## Dashboard Preview
 
-![Heart Disease Analytics Dashboard](heart-disease-dashboard.png)
+![Heart Disease Analytics Dashboard](Dashboard_Overview.png)
 
 ## Key Objectives
 
