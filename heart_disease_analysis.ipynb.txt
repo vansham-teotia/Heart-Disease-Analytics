@@ -1,0 +1,539 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "provenance": []
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    },
+    "language_info": {
+      "name": "python"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "source": [
+        "# Heart Disease Dataset Analysis\n",
+        "**Objective:** To clean, preprocess, and perform exploratory data analysis (EDA) on the Heart Disease UCI dataset. \n",
+        "\n",
+        "### 1. Environment Setup\n",
+        "Importing the necessary Python libraries for data manipulation, numerical operations, and data visualization."
+      ],
+      "metadata": {}
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {
+        "id": "mzCgtP1VjH2t"
+      },
+      "outputs": [],
+      "source": [
+        "import pandas as pd\n",
+        "import numpy as np\n",
+        "import matplotlib.pyplot as plt\n",
+        "import seaborn as sns\n",
+        "import warnings\n",
+        "warnings.filterwarnings('ignore')\n"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "### 2. Data Acquisition\n",
+        "Mounting the Google Drive environment to access the raw dataset."
+      ],
+      "metadata": {}
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "from google.colab import drive\n",
+        "drive.mount(\"/content/heart_disease_uci.csv\")"
+      ],
+      "metadata": {
+        "id": "XvZzkfN4abM3"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "### 3. Data Loading\n",
+        "Loading the dataset into a Pandas DataFrame and inspecting the top and bottom records to ensure proper formatting."
+      ],
+      "metadata": {}
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "df=pd.read_csv(\"/content/heart_disease_uci.csv\")\n",
+        "df.head()\n",
+        "df.tail()"
+      ],
+      "metadata": {
+        "id": "NiLyQNERlnTD"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "### 4. Dataset Dimensions\n",
+        "Checking the total number of rows and columns to understand the volume of the data."
+      ],
+      "metadata": {}
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "df.shape"
+      ],
+      "metadata": {
+        "id": "YrHS2G8vmj_Q"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "### 5. Data Standardization\n",
+        "Renaming columns to utilize standardized, human-readable naming conventions. This improves code maintainability and makes visualizations easier to interpret for business stakeholders."
+      ],
+      "metadata": {}
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "df.rename(columns={\n",
+        "    \"id\": \"Patient_ID\",\n",
+        "    \"age\": \"Age\",\n",
+        "    \"sex\": \"Gender\",\n",
+        "    \"dataset\": \"Data_Source\",\n",
+        "    \"cp\": \"Chest_Pain_Type\",\n",
+        "    \"trestbps\": \"Resting_BP\",\n",
+        "    \"chol\": \"Cholesterol\",\n",
+        "    \"fbs\": \"High_Fasting_Sugar\",\n",
+        "    \"restecg\": \"Resting_ECG\",\n",
+        "    \"thalch\": \"Max_Heart_Rate\",\n",
+        "    \"exang\": \"Exercise_Angina\",\n",
+        "    \"oldpeak\": \"ST_Depression\",\n",
+        "    \"slope\": \"ST_Slope\",\n",
+        "    \"ca\": \"Major_Vessels\",\n",
+        "    \"thal\": \"Thalassemia\",\n",
+        "    \"num\": \"Disease_Severity\"\n",
+        "}, inplace=True)"
+      ],
+      "metadata": {
+        "id": "xMgm7rRhnf_N"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Verifying the successful application of the updated column schema."
+      ],
+      "metadata": {}
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "df.columns"
+      ],
+      "metadata": {
+        "id": "2rIc7lQbnntt"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "### 6. Feature Engineering: Target Variable\n",
+        "Transforming the granular `Disease_Severity` metric into a simplified, binary classification target variable (`Disease_status`). This categorizes patients into clear \"Diseases\" vs \"No diseases\" segments for high-level reporting."
+      ],
+      "metadata": {}
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "df[\"Disease_status\"]=np.where(df[\"Disease_Severity\"]==0,\"No diseases\",\"Diseases\")\n",
+        "df.Disease_status.value_counts()\n"
+      ],
+      "metadata": {
+        "id": "fcSFS1ANnwmE"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "### 7. Feature Engineering: Age Segmentation\n",
+        "Binning continuous age data into distinct categorical age cohorts. This allows for demographic-based cohort analysis."
+      ],
+      "metadata": {}
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "bins = [0,39,49,59,69,100]\n",
+        "labels =[\"Under 40\",\n",
+        "    \"40-49\",\n",
+        "    \"50-59\",\n",
+        "    \"60-69\",\n",
+        "    \"70+\"]\n",
+        "df[\"Age_group\"] = pd.cut(df[\"Age\"],bins=bins,labels=labels)\n",
+        "df.Age_group"
+      ],
+      "metadata": {
+        "id": "r0rccQMByLY8"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "### 8. Data Quality Assessment: Missing Values\n",
+        "Checking for missing or null values across all features to determine necessary imputation strategies."
+      ],
+      "metadata": {}
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "df.isnull().sum()"
+      ],
+      "metadata": {
+        "id": "ZPQyDK0r0Hio"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Calculating the percentage of missing data per column to prioritize remediation efforts."
+      ],
+      "metadata": {}
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "missing =  (df.isnull().sum() / len(df) * 100).sort_values(ascending=False)\n",
+        "\n",
+        "\n",
+        "missing"
+      ],
+      "metadata": {
+        "id": "taKOfFv61Hz0"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Investigating the distribution of the `Major_Vessels` feature, which exhibits a high percentage of missing values."
+      ],
+      "metadata": {}
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "df[\"Major_Vessels\"].value_counts()"
+      ],
+      "metadata": {
+        "id": "YZLVeJWBXfoD"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "### 9. Data Quality Assessment: Duplicates\n",
+        "Scanning the dataset for duplicate patient records to prevent skewed analytical results."
+      ],
+      "metadata": {}
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "df.duplicated().sum()"
+      ],
+      "metadata": {
+        "id": "e8GQDqC82KmX"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "### 10. Dataset Overview\n",
+        "Reviewing the data types (Dtypes) and non-null counts to ensure features are correctly formatted for downstream processing."
+      ],
+      "metadata": {}
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "df.info()"
+      ],
+      "metadata": {
+        "id": "m-W2KfyK2ggT"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "### 11. Statistical Summary\n",
+        "Generating descriptive statistics for numeric features to identify central tendencies, variances, and potential outliers."
+      ],
+      "metadata": {}
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "df.describe()"
+      ],
+      "metadata": {
+        "id": "0H6a1Prv4qiy"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "### 12. Data Cleaning: Handling Missing Values\n",
+        "Addressing missing values in the `Thalassemia` column. Nulls are replaced with an 'unknown' category to retain the records without introducing imputation bias."
+      ],
+      "metadata": {}
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "df['Thalassemia']= df['Thalassemia'].fillna(\"unknown\")  #it is an inherited blood disorder where the body cannot make enough normal hemoglobin,\n",
+        "                                                         #the protein in red blood cells that carries oxygen.\n",
+        "df.Thalassemia"
+      ],
+      "metadata": {
+        "id": "XmiPZguX5akZ"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "Final review of the dataset post-preprocessing to ensure it is ready for Exploratory Data Analysis (EDA)."
+      ],
+      "metadata": {}
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "df"
+      ],
+      "metadata": {
+        "id": "2wAucud24zuD"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "### 13. Exploratory Data Analysis (EDA)\n",
+        "#### Overall Heart Disease Distribution\n",
+        "Visualizing the balance between positive and negative heart disease cases in the cohort."
+      ],
+      "metadata": {}
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "sns.countplot(data=df,x=\"Disease_status\")\n",
+        "plt.title(\"Heart Disease Distrubtion\")\n",
+        "plt.show()"
+      ],
+      "metadata": {
+        "id": "UbI-2Uyq6U_t"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "#### Heart Disease Prevalence by Age Group\n",
+        "Analyzing how the diagnosis of heart disease tracks across the defined age cohorts."
+      ],
+      "metadata": {}
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "sns.countplot(\n",
+        "    data=df,\n",
+        "    x=\"Age_group\",\n",
+        "    hue=\"Disease_status\"\n",
+        ")\n",
+        "\n",
+        "plt.title(\"Heart Disease by Age Group\")\n",
+        "plt.show()"
+      ],
+      "metadata": {
+        "id": "Q5jVMciv8Gtu"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "#### Heart Disease Prevalence by Gender\n",
+        "Comparing the likelihood of disease presentation between male and female patients."
+      ],
+      "metadata": {}
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "sns.countplot(data=df,x=\"Gender\",hue=\"Disease_status\")\n",
+        "plt.title(\"Heart Disease by Gender\")\n",
+        "plt.show()"
+      ],
+      "metadata": {
+        "id": "fNkK7vJA9L_A"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "#### Heart Disease by Chest Pain Type\n",
+        "Examining the correlation between distinct symptom presentations (chest pain types) and a positive disease diagnosis."
+      ],
+      "metadata": {}
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "sns.countplot(data=df,x=\"Chest_Pain_Type\",hue=\"Disease_status\")\n",
+        "plt.title(\"Heart Disease by Chest Pain Type\")\n",
+        "plt.xticks(rotation=30)\n",
+        "plt.show()"
+      ],
+      "metadata": {
+        "id": "d7TVdxxd-ZVS"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "#### Cholesterol vs. Disease Status\n",
+        "Utilizing a boxplot to assess the distribution, median, and outlier presence of cholesterol levels relative to disease status."
+      ],
+      "metadata": {}
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "sns.boxplot(data=df,x=\"Disease_status\",y=\"Cholesterol\")\n",
+        "plt.title(\"Cholesterol by Disease Status\")\n",
+        "plt.show()"
+      ],
+      "metadata": {
+        "id": "IVvoMVjJ_rwj"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "#### Clinical Feature Correlation Analysis\n",
+        "Generating a correlation heatmap to detect linear relationships and multi-collinearity among continuous clinical variables."
+      ],
+      "metadata": {}
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "numeric_cols = [\n",
+        "    \"Age\",\n",
+        "    \"Resting_BP\",\n",
+        "    \"Cholesterol\",\n",
+        "    \"Max_Heart_Rate\",\n",
+        "    \"ST_Depression\",\n",
+        "    \"Major_Vessels\",\n",
+        "    \"Disease_Severity\"\n",
+        "]\n",
+        "\n",
+        "plt.figure(figsize=(10, 7))\n",
+        "\n",
+        "sns.heatmap(\n",
+        "    df[numeric_cols].corr(),\n",
+        "    annot=True\n",
+        ")\n",
+        "\n",
+        "plt.title(\"Clinical Feature Correlation\")\n",
+        "plt.show()"
+      ],
+      "metadata": {
+        "id": "QL8opx9TAgkD"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "### 14. Data Export\n",
+        "Saving the finalized, cleaned dataset to a `.csv` file for use in reporting dashboards or machine learning pipelines."
+      ],
+      "metadata": {}
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "df.to_csv(\n",
+        "    \"heart_disease_final.csv\",\n",
+        "    index=False\n",
+        ")"
+      ],
+      "metadata": {
+        "id": "_UpPsBzdBQYz"
+      },
+      "execution_count": null,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [],
+      "metadata": {
+        "id": "xAbR6S6nEfFZ"
+      },
+      "execution_count": null,
+      "outputs": []
+    }
+  ]
+}
